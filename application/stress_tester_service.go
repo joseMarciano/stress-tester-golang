@@ -1,6 +1,7 @@
 package application
 
 import (
+	"crypto/tls"
 	"fmt"
 	"net/http"
 	"stress-test/internal/model"
@@ -65,9 +66,16 @@ func (s *StressTesterService) Test() *model.Report {
 }
 
 func (s *StressTesterService) executeHttpRequest() uint {
-	client := http.DefaultClient
+	client := http.Client{Transport: &http.Transport{
+		TLSClientConfig: &tls.Config{InsecureSkipVerify: true}, // <--- Problem
+	}}
 
-	response, _ := client.Get(s.url)
+	response, err := client.Get(s.url)
+
+	if err != nil {
+		fmt.Printf("Error on request for %s - err: %s", s.url, err)
+		return 0
+	}
 
 	return uint(response.StatusCode)
 }
